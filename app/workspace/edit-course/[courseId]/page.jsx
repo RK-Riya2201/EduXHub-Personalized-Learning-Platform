@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation';
 import axios from 'axios';
 import CourseInfo from '../_components/CourseInfo';
+import ChapterTopicList from '../_components/ChapterTopicList';
 
 
 function EditCourse({ viewCourse = false }) {
@@ -24,7 +25,8 @@ function EditCourse({ viewCourse = false }) {
     return (
         <div>
             <CourseInfo course={course} />
-          
+            <ChapterTopicList course={course} />
+            
         </div>
     )
 }
