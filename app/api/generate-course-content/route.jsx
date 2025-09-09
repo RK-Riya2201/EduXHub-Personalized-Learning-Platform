@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/config/db";
 import { coursesTable } from "@/config/schema";
+import { ai } from "../generate-course-layout/route"
 import { eq } from "drizzle-orm";
 import axios from "axios";
 
@@ -16,82 +17,83 @@ Schema:{
 : User Input:
 `;
 
-export async function POST(req) {
-  try {
-    const { courseJson, courseTitle, courseId } = await req.json();
+ export async function POST(req) {
+    const { courseId, courseJson, courseTitle } = await req.json();
 
-    if (!courseJson?.chapters?.length) {
-      return NextResponse.json({ error: "No chapters found" }, { status: 400 });
-    }
+  
+    try {
+        const promises = courseJson?.chapters?.map(async (chapter) => {
+            const model = 'gemini-2.0-flash';
+            const contents = [
+                {
+                    role: 'user',
+                    parts: [{ text: PROMPT + JSON.stringify(chapter) }],
+                },
+            ];
 
-    const promises = courseJson.chapters.map(async (chapter) => {
-      try {
-        const config = { responseMimetypes: "text/plain" };
-        const model = "gemini-2.0-flash";
-        const contents = [
-          { role: "user", parts: [{ text: PROMPT + JSON.stringify(chapter) }] },
-        ];
+            const response = await ai.models.generateContent({
+                model,
+                contents
+            });
+          
+                 const RawResp = response?.candidates[0]?.content?.parts[0]?.text;
+            const RawJson = RawResp.replace('```json', '').replace('```', '').trim();
+            const JSONResp = JSON.parse(RawJson);
 
-        const response = await ai.models.generateContent({ model, config, contents });
+            //GET Youtube Videos
 
-        const rawText = response?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!rawText) {
-          throw new Error("AI did not return content.");
-        }
+            const youtubeData = await GetYoutubeVideo(chapter?.chapterName);
+            console.log({
+                youtubeVideo: youtubeData,
+                courseData: JSONResp,
+            })
+            return {
+                youtubeVideo: youtubeData,
+                courseData: JSONResp,
+            };
+        });
 
-        const jsonStr = rawText.replace(/```json|```/g, "").trim();
-        const CourseData = JSON.parse(jsonStr);
-
-        const youtubeVideo = await GetYoutubeVideo(chapter.chapterName);
-
-        return { CourseData, youtubeVideo };
-      } catch (err) {
-        console.error("Error processing chapter:", chapter.chapterName, err);
-        return { error: `Failed to generate content for ${chapter.chapterName}` };
-      }
-    });
 
     // Generate all chapter content
     const CourseContent = await Promise.all(promises);
 
     // Save to database
-    await db
-      .update(coursesTable)
-      .set({ courseContent: CourseContent }) 
-      .where(eq(coursesTable.cid, courseId));
+        const dbResp = await db.update(coursesTable).set({
+            courseContent: CourseContent,
+        }).where(eq(coursesTable.cid, courseId));
 
-    // Fetch saved content to verify
-    const course = await db
-      .select()
-      .from(coursesTable)
-      .where(eq(coursesTable.cid, courseId));
+        return NextResponse.json({
+            courseName: courseTitle,
+            CourseContent: CourseContent,
+        });
 
-    console.log(course[0].courseContent); 
-
-    return NextResponse.json({ courseName: courseTitle, CourseContent });
-  } catch (err) {
-    console.error("POST /generateCourseContent error:", err);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
-  }
+    } catch (error) {
+        
+        console.error("Error in generate-course-content API:", error);
+        return new NextResponse("Failed to generate course content due to an internal error.", { status: 500 });
+    }
 }
 
-async function GetYoutubeVideo(topic) {
-  try {
-    const params = {
-      part: "snippet",
-      q: topic,
-      maxResults: 4,
-      type: "video",
-      key: process.env.YOUTUBE_API_KEY,
-    };
+const YOUTUBE_BASE_URL = "https://www.googleapis.com/youtube/v3/search"
 
-    const resp = await axios.get("https://www.googleapis.com/youtube/v3/search", { params });
-    return resp.data.items.map((item) => ({
-      videoId: item.id.videoId,
-      title: item.snippet.title,
-    }));
-  } catch (err) {
-    console.error("YouTube API error:", err);
-    return [];
-  }
+const GetYoutubeVideo = async (topic) => {
+    const params = {
+        part: 'snippet',
+        q: topic,
+        maxResults: 4,
+        type: 'video',
+        key: process.env.YOUTUBE_API_KEY //Your YouTube API key    
+    }
+    const resp = await axios.get(YOUTUBE_BASE_URL, { params });
+    const youtubeVideoListResp = resp.data.items;
+    const youtubeVideoList = [];
+    youtubeVideoListResp.forEach((item) => {
+        const data = {
+            videoId: item.id?.videoId,
+            title: item?.snippet?.title
+        }
+        youtubeVideoList.push(data);
+    });
+    console.log("Youtube Video List:", youtubeVideoList);
+    return youtubeVideoList;
 }

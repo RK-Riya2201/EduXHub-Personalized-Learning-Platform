@@ -1,11 +1,25 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import axios from 'axios';
 import { Button } from "@/components/ui/button";
 import AddNewCourseDialog from "./AddNewCourseDialog";
+import { useUser } from "@clerk/nextjs";
 
 function CourseList() {
   const [courseList, setCourseList] = useState([]);
+  const { user } = useUser();
+
+  useEffect(() => {
+    user && GetCourseList();
+  },[user]
+  )
+
+const GetCourseList=async()=>
+{
+  const result = await axios.post('/api/courses');
+  console.log(result.data);
+}
 
   return (
     <div className="mt-12">

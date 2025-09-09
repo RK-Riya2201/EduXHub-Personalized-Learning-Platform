@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
+import { toast } from "sonner";
 
 function CourseInfo({ course }) {
   const courseLayout = course?.courseJson?.course;
@@ -18,25 +19,27 @@ function CourseInfo({ course }) {
       const result = await axios.post("/api/generate-course-content", {
         courseJson: courseLayout,
         courseTitle: course?.name,
-        courseId: course?.cid,
+        courseId: course?.cid
       });
       console.log(result.data);
-      setLoading(false);
       router.replace("/workspace");
+      toast.success("Course content generated successfully");
     } catch (e) {
       console.log(e);
+      toast.error("Server side error");
+    } finally {
       setLoading(false);
     }
-  };
+  }; // ✅ Make sure this closing brace exists
 
   return (
     <div className="md:flex gap-5 justify-between p-5 rounded-2xl shadow">
       <div className="flex flex-col gap-3">
         <h2 className="font-bold text-3xl">
-          {courseLayout?.name || "Untitled Course"}
+          {courseLayout?.name ?? "Untitled Course"}
         </h2>
         <p className="line-clamp-3 text-gray-500">
-          {courseLayout?.description || "No description available."}
+          {courseLayout?.description ?? "No description available."}
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -44,7 +47,7 @@ function CourseInfo({ course }) {
             <Clock className="text-gray-500" />
             <section>
               <h2 className="font-bold">Duration</h2>
-              <h2>{courseLayout?.duration || "N/A"}</h2>
+              <h2>{courseLayout?.duration ?? "N/A"}</h2>
             </section>
           </div>
 
@@ -52,7 +55,7 @@ function CourseInfo({ course }) {
             <Book className="text-green-500" />
             <section>
               <h2 className="font-bold">Chapters</h2>
-              <h2>{courseLayout?.chapters?.length || 0}</h2>
+              <h2>{courseLayout?.chapters?.length ?? 0}</h2>
             </section>
           </div>
 
@@ -60,7 +63,7 @@ function CourseInfo({ course }) {
             <TrendingUp className="text-red-500" />
             <section>
               <h2 className="font-bold">Difficulty Level</h2>
-              <h2>{course?.level || "N/A"}</h2>
+              <h2>{course?.level ?? "N/A"}</h2>
             </section>
           </div>
         </div>
@@ -71,8 +74,8 @@ function CourseInfo({ course }) {
       </div>
 
       <Image
-        src={course?.bannerImageUrl}
-        alt={"banner Image"}
+        src={course?.bannerImageUrl ?? "/default-banner.png"}
+        alt="Banner Image"
         width={400}
         height={400}
         className="w-full mt-5 md:mt-0 object-cover aspect-auto h-[240px] rounded-2xl"
