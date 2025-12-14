@@ -24,7 +24,7 @@ function EditCourse({ viewCourse = false }) {
     }
     return (
         <div>
-            <CourseInfo course={course} />
+            <CourseInfo course={course} viewCourse={viewCourse} />
             <ChapterTopicList course={course} />
             
         </div>

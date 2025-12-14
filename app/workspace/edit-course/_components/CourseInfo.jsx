@@ -1,14 +1,22 @@
 "use client";
 
-import { Book, Clock, TrendingUp } from "lucide-react";
+import {
+  Book,
+  Clock,
+  Loader2Icon,
+  PlayCircleIcon,
+  Settings,
+  TrendingUp,
+} from "lucide-react";
 import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "sonner";
+import Link from "next/link";
 
-function CourseInfo({ course }) {
+function CourseInfo({ course, viewCourse }) {
   const courseLayout = course?.courseJson?.course;
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -19,7 +27,7 @@ function CourseInfo({ course }) {
       const result = await axios.post("/api/generate-course-content", {
         courseJson: courseLayout,
         courseTitle: course?.name,
-        courseId: course?.cid
+        courseId: course?.cid,
       });
       console.log(result.data);
       router.replace("/workspace");
@@ -30,7 +38,7 @@ function CourseInfo({ course }) {
     } finally {
       setLoading(false);
     }
-  }; // ✅ Make sure this closing brace exists
+  };
 
   return (
     <div className="md:flex gap-5 justify-between p-5 rounded-2xl shadow">
@@ -38,6 +46,7 @@ function CourseInfo({ course }) {
         <h2 className="font-bold text-3xl">
           {courseLayout?.name ?? "Untitled Course"}
         </h2>
+
         <p className="line-clamp-3 text-gray-500">
           {courseLayout?.description ?? "No description available."}
         </p>
@@ -68,9 +77,27 @@ function CourseInfo({ course }) {
           </div>
         </div>
 
-        <Button onClick={GenerateCourseContent} disabled={loading}>
-          {loading ? "Generating..." : "Generate Course"}
-        </Button>
+        {!viewCourse ? (
+          <Button
+            className="max-w-lg"
+            onClick={GenerateCourseContent}
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2Icon className="animate-spin" />
+            ) : (
+              <Settings />
+            )}
+            Generate Content
+          </Button>
+        ) : (
+          <Link href={`/course/${course?.cid}`}>
+            <Button>
+              <PlayCircleIcon />
+              Continue Learning
+            </Button>
+          </Link>
+        )}
       </div>
 
       <Image
