@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
 import { PlayCircle } from 'lucide-react';
-import { Progress } from '@radix-ui/react-progress';
+import { Progress } from "@/components/ui/progress"
+
+
 
 function EnrollCourseCard({ course, enrollCourse }) {
   const courseJson = course?.courseJson?.course;
