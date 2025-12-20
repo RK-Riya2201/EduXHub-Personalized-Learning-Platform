@@ -27,7 +27,7 @@ const SideBarOptions = [
   {
     title: "My Learning",
     icon: Book,
-    path: "/workspace/my-courses",
+    path: "/workspace/my-learning",
   },
   {
     title: "Explore Courses",
@@ -35,9 +35,9 @@ const SideBarOptions = [
     path: "/workspace/explore",
   },
   {
-    title: "AI Tools",
+    title: "Subscription Plan",
     icon: PencilRulerIcon,
-    path: "/workspace/ai-tools",
+    path: "/workspace/billing",
   },
   {
     title: "Profile",

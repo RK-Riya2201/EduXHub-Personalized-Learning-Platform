@@ -71,61 +71,109 @@ function AddNewCourseDialog({ children }) {
     return (
         <Dialog>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Create New Course Using AI</DialogTitle>
-                    <DialogDescription asChild>
-                        <div className='flex flex-col gap-4 mt-3'>
-                            <div>
-                                <label>Course Name</label>
-                                <Input placeholder="Course Name"
-                                    onChange={(event) => onHandleInputChange('name', event?.target.value)} />
-                            </div>
-                            <div>
-                                <label>Course Description (Optional)</label>
-                                <Textarea placeholder="Course Description"
-                                    onChange={(event) => onHandleInputChange('description', event?.target.value)} />
-                            </div>
-                            <div>
-                                <label>Number of Chapters</label>
-                                <Input placeholder="Number of Chapters" type='number'
-                                    onChange={(event) => onHandleInputChange('noOfChapters', event?.target.value)} />
-                            </div>
-                            <div className='flex gap-3 items-center'>
-                                <label>Include Video</label>
-                                <Switch
-                                    onCheckedChange={() => onHandleInputChange('includeVideo', !formData?.includeVideo)} />
-                            </div>
-                            <div>
-                                <label className=''>Difficulty Levels</label>
-                                <Select onValueChange={(value) => onHandleInputChange('level', value)}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Difficulty Levels" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="beginner">Beginner</SelectItem>
-                                        <SelectItem value="moderate">Moderate</SelectItem>
-                                        <SelectItem value="advanced">Advanced</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div>
-                                <label>Category</label>
-                                <Input placeholder="Category (Separated by Comma)"
-                                    onChange={(event) => onHandleInputChange('category', event?.target.value)} />
-                            </div>
+            <DialogContent className="max-w-lg">
+  <DialogHeader>
+    <DialogTitle className="text-xl font-semibold">
+      Create New Course Using AI
+    </DialogTitle>
+    <DialogDescription asChild>
+      <div className="flex flex-col gap-5 mt-4">
 
-                            <div className='mt-5'>
-                                <Button className={'w-full'}
-                                    onClick={onGenerate} disabled={loading}>
-                                    {loading ? <Loader2Icon className='animate-spin' /> :
-                                        < Sparkle />}Generate Course</Button>
-                            </div>
-                        </div>
-                    </DialogDescription>
-                </DialogHeader>
-            </DialogContent>
-        </Dialog>
+        {/* Course Name */}
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Course Name</label>
+          <Input
+            placeholder="Course Name"
+            onChange={(event) =>
+              onHandleInputChange("name", event?.target.value)
+            }
+          />
+        </div>
+
+        {/* Description */}
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">
+            Course Description <span className="text-muted-foreground">(Optional)</span>
+          </label>
+          <Textarea
+            placeholder="Brief course overview"
+            className="min-h-[90px]"
+            onChange={(event) =>
+              onHandleInputChange("description", event?.target.value)
+            }
+          />
+        </div>
+
+        {/* Chapters */}
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Number of Chapters</label>
+          <Input
+            type="number"
+            placeholder="e.g. 10"
+            onChange={(event) =>
+              onHandleInputChange("noOfChapters", event?.target.value)
+            }
+          />
+        </div>
+
+        {/* Include Video */}
+        <div className="flex items-center justify-between rounded-md border p-3">
+          <label className="text-sm font-medium">Include Video Content</label>
+          <Switch
+            onCheckedChange={() =>
+              onHandleInputChange("includeVideo", !formData?.includeVideo)
+            }
+          />
+        </div>
+
+        {/* Difficulty */}
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Difficulty Level</label>
+          <Select onValueChange={(value) => onHandleInputChange("level", value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select difficulty" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="beginner">Beginner</SelectItem>
+              <SelectItem value="moderate">Moderate</SelectItem>
+              <SelectItem value="advanced">Advanced</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Category */}
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Category</label>
+          <Input
+            placeholder="AI, Web Development, Design"
+            onChange={(event) =>
+              onHandleInputChange("category", event?.target.value)
+            }
+          />
+        </div>
+
+        {/* CTA */}
+        <div className="pt-4">
+          <Button
+            className="w-full flex gap-2"
+            onClick={onGenerate}
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2Icon className="animate-spin" />
+            ) : (
+              <Sparkle />
+            )}
+            Generate Course
+          </Button>
+        </div>
+
+      </div>
+    </DialogDescription>
+  </DialogHeader>
+</DialogContent>
+
+</Dialog>
     )
 }
 

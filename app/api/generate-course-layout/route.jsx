@@ -41,8 +41,8 @@ export const ai = new GoogleGenAI({
 export async function POST(req) {
     const { courseId, ...formData } = await req.json();
     const user = await currentUser();
-    //const { has } = await auth();
-    //const hasPreniumAccess = has({ plan: 'started' })
+    const { has } = auth();
+    const hasPremiumAccess = has({ plan: "Premium" });
 
     // To run this code you need to install the following dependencies:
     // npm install @google/genai mime
@@ -73,7 +73,7 @@ export async function POST(req) {
     ];
 
     //If user already created any course?
-   /* if (!hasPreniumAccess) {
+   if (!hasPreniumAccess) {
         const result = await db.select().from(coursesTable)
             .where(eq(coursesTable.userEmail, user?.primaryEmailAddress?.emailAddress));
 
@@ -81,7 +81,7 @@ export async function POST(req) {
             return NextResponse.json({ 'resp': "limit exceed" });
         }
     }
-   */
+   
     
     const response = await ai.models.generateContent({
         model,

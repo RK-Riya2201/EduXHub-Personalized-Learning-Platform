@@ -52,13 +52,7 @@ function CourseInfo({ course, viewCourse }) {
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="flex gap-5 items-center p-3 rounded-lg shadow">
-            <Clock className="text-gray-500" />
-            <section>
-              <h2 className="font-bold">Duration</h2>
-              <h2>{courseLayout?.duration ?? "N/A"}</h2>
-            </section>
-          </div>
+         
 
           <div className="flex gap-5 items-center p-3 rounded-lg shadow">
             <Book className="text-green-500" />

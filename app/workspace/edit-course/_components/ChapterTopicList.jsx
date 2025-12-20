@@ -15,7 +15,6 @@ function ChapterTopicList({ course }) {
               <h2 className="text-xl font-semibold">Chapter {index + 1}</h2>
               <h2 className="font-bold text-2xl mt-2">{chapter.chapterName}</h2>
               <h2 className="flex justify-between mt-4 text-sm">
-                <span>Duration: {chapter?.duration}</span>
                 <span>No. Of Topics: {chapter?.topics?.length}</span>
               </h2>
             </div>
@@ -59,7 +58,7 @@ function ChapterTopicList({ course }) {
           </div>
         ))}
 
-        <div className="p-6 border shadow-lg rounded-2xl bg-green-500 text-white mt-5 w-40 text-center font-bold">
+        <div className="p-6 border shadow-lg rounded-2xl bg-green-600 text-white mt-5 w-40 text-center font-bold">
           Finish
         </div>
       </div>
