@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/config/db";
 import { coursesTable } from "@/config/schema";
-import { ai } from "../generate-course-layout/route"
+import { OpenRouter } from "@openrouter/sdk";
 import { eq } from "drizzle-orm";
 import axios from "axios";
 
-// AI content generation prompt
+/* 🔴 PROMPT — UNCHANGED */
 const PROMPT = `Depends on Chapter name and Topic. Generate content for each topic in HTML and give response in JSON format.
 Schema:{
  chapterName:<>,
@@ -17,83 +17,111 @@ Schema:{
 : User Input:
 `;
 
- export async function POST(req) {
+export async function POST(req) {
+  try {
     const { courseId, courseJson, courseTitle } = await req.json();
 
-  
-    try {
-        const promises = courseJson?.chapters?.map(async (chapter) => {
-            const model = 'gemini-2.0-flash';
-            const contents = [
-                {
-                    role: 'user',
-                    parts: [{ text: PROMPT + JSON.stringify(chapter) }],
-                },
-            ];
+    /* ✅ 1. SAFELY PARSE courseJson */
+    const parsedCourseJson =
+      typeof courseJson === "string"
+        ? JSON.parse(courseJson)
+        : courseJson;
 
-            const response = await ai.models.generateContent({
-                model,
-                contents
-            });
-          
-                 const RawResp = response?.candidates[0]?.content?.parts[0]?.text;
-            const RawJson = RawResp.replace('```json', '').replace('```', '').trim();
-            const JSONResp = JSON.parse(RawJson);
+    if (!parsedCourseJson?.course?.chapters) {
+      console.error("Invalid courseJson structure:", parsedCourseJson);
+      return NextResponse.json(
+        { error: "Invalid course structure" },
+        { status: 400 }
+      );
+    }
 
-            //GET Youtube Videos
+    const chapters = parsedCourseJson.course.chapters;
 
-            const youtubeData = await GetYoutubeVideo(chapter?.chapterName);
-            console.log({
-                youtubeVideo: youtubeData,
-                courseData: JSONResp,
-            })
-            return {
-                youtubeVideo: youtubeData,
-                courseData: JSONResp,
-            };
-        });
+    /* ✅ 2. INIT OPENROUTER (per Quickstart docs) */
+    const openRouter = new OpenRouter({
+      apiKey: process.env.OPENROUTER_API_KEY,
+      defaultHeaders: {
+        "HTTP-Referer": "http://localhost:3000",
+        "X-Title": "AI Course Generator",
+      },
+    });
 
+    /* ✅ 3. GENERATE CONTENT FOR EACH CHAPTER */
+    const promises = chapters.map(async (chapter) => {
+      const response = await openRouter.chat.send({
+        model: "openrouter/auto",
+        messages: [
+          {
+            role: "user",
+            content:
+              PROMPT +
+              JSON.stringify({
+                chapterName: chapter.chapterName,
+                topics: chapter.topics,
+              }),
+          },
+        ],
+        stream: false,
+      });
 
-    // Generate all chapter content
+      const rawText = response?.choices?.[0]?.message?.content;
+
+      if (!rawText) {
+        throw new Error("AI did not return content");
+      }
+
+      const cleanJson = rawText.replace(/```json|```/g, "").trim();
+      const JSONResp = JSON.parse(cleanJson);
+
+      /* ✅ 4. FETCH YOUTUBE VIDEOS */
+      const youtubeVideo = await GetYoutubeVideo(chapter.chapterName);
+
+      return {
+        ...JSONResp,
+        youtubeVideo,
+      };
+    });
+
     const CourseContent = await Promise.all(promises);
 
-    // Save to database
-        const dbResp = await db.update(coursesTable).set({
-            courseContent: CourseContent,
-        }).where(eq(coursesTable.cid, courseId));
+    /* ✅ 5. SAVE TO DATABASE */
+    await db
+      .update(coursesTable)
+      .set({
+        courseContent: CourseContent,
+      })
+      .where(eq(coursesTable.cid, courseId));
 
-        return NextResponse.json({
-            courseName: courseTitle,
-            CourseContent: CourseContent,
-        });
-
-    } catch (error) {
-        
-        console.error("Error in generate-course-content API:", error);
-        return new NextResponse("Failed to generate course content due to an internal error.", { status: 500 });
-    }
+    /* ✅ 6. RESPONSE */
+    return NextResponse.json({
+      courseName: courseTitle,
+      CourseContent,
+    });
+  } catch (error) {
+    console.error("generate-course-content error:", error);
+    return NextResponse.json(
+      { error: "Failed to generate course content" },
+      { status: 500 }
+    );
+  }
 }
 
-const YOUTUBE_BASE_URL = "https://www.googleapis.com/youtube/v3/search"
+/* ✅ YOUTUBE HELPER — CORRECT */
+const YOUTUBE_BASE_URL = "https://www.googleapis.com/youtube/v3/search";
 
 const GetYoutubeVideo = async (topic) => {
-    const params = {
-        part: 'snippet',
-        q: topic,
-        maxResults: 4,
-        type: 'video',
-        key: process.env.YOUTUBE_API_KEY //Your YouTube API key    
-    }
-    const resp = await axios.get(YOUTUBE_BASE_URL, { params });
-    const youtubeVideoListResp = resp.data.items;
-    const youtubeVideoList = [];
-    youtubeVideoListResp.forEach((item) => {
-        const data = {
-            videoId: item.id?.videoId,
-            title: item?.snippet?.title
-        }
-        youtubeVideoList.push(data);
-    });
-    console.log("Youtube Video List:", youtubeVideoList);
-    return youtubeVideoList;
-}
+  const resp = await axios.get(YOUTUBE_BASE_URL, {
+    params: {
+      part: "snippet",
+      q: topic,
+      maxResults: 4,
+      type: "video",
+      key: process.env.YOUTUBE_API_KEY,
+    },
+  });
+
+  return resp.data.items.map((item) => ({
+    videoId: item.id?.videoId,
+    title: item.snippet?.title,
+  }));
+};
