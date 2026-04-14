@@ -52,7 +52,7 @@ function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className={'p-5'}>
-        <Image src={"/logo.svg"} alt="logo" width={120} height={50} />
+        <Image src={"/edu.png"} alt="logo" width={120} height={50} />
       </SidebarHeader>
 
       <SidebarContent>
